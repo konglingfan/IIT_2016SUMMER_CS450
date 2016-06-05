@@ -155,6 +155,13 @@ fork(void)
   np->cwd = idup(proc->cwd);
  
   pid = np->pid;
+
+  //add by Lingfan
+  //initial bursts buffer
+  memset(np->bursts,-1,sizeof(np->bursts));
+  np->bursts[0]=ticks;
+  np->burst=0;
+  
   np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
@@ -182,6 +189,11 @@ exit(void)
 
   iput(proc->cwd);
   proc->cwd = 0;
+
+  //Add by Lingfan
+  //Clean bursts info
+  memset(proc->bursts,-1,sizeof(proc->bursts));
+  proc->burst=0;
 
   acquire(&ptable.lock);
 

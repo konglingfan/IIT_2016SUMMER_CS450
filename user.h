@@ -22,6 +22,9 @@ int getpid(void);
 char* sbrk(int);
 int sleep(int);
 int uptime(void);
+int start_burst(void);
+int end_burst(void);
+int print_bursts(void);
 
 // ulib.c
 int stat(char*, struct stat*);

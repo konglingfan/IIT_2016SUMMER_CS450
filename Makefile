@@ -167,7 +167,7 @@ UPROGS=\
 	_wc\
 	_zombie\
 	_bigtest\
-	#_getcount\
+	_schedtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

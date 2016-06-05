@@ -88,3 +88,59 @@ sys_uptime(void)
   release(&tickslock);
   return xticks;
 }
+
+//system call start_burst
+int
+sys_start_burst(void)
+{
+  
+  //cprintf("start burst\n");
+  acquire(&tickslock);
+  if(proc->burst>99)
+  {
+    proc->burst=0;
+  }
+  proc->bursts[proc->burst]=ticks;
+  release(&tickslock);
+  return 0;
+}
+
+//system call end_burst
+int
+sys_end_burst(void)
+{
+  //cprintf("end burst\n");
+  acquire(&tickslock);
+  proc->bursts[proc->burst]=ticks-
+    proc->bursts[proc->burst];
+  if(proc->bursts[proc->burst]==0)
+  {
+    proc->bursts[proc->burst]=-1;
+  }
+  else	proc->burst++;
+  release(&tickslock);
+  return 0;
+}
+
+//system call print_bursts
+int
+sys_print_bursts(void)
+{
+  int i=0;
+  //cprintf("print bursts\n");
+  for(i=0;i<100;i++)
+  {
+    if(proc->bursts[i]!=-1)
+    {
+      if(i!=0) cprintf(", ");
+      cprintf("%d",proc->bursts[i]);
+    }
+    else
+    {
+      break;
+    }     
+  }
+  cprintf("\n");
+    
+  return 0;
+}
