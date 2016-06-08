@@ -94,9 +94,10 @@ int
 sys_start_burst(void)
 {
   
-  //cprintf("start burst\n");
+  
   acquire(&tickslock);
-  if(proc->burst>99)
+  //cprintf("start burst pid %d: %d\n",proc->pid,ticks);
+  if(proc->burst>=BURSTS)
   {
     proc->burst=0;
   }
@@ -111,6 +112,7 @@ sys_end_burst(void)
 {
   //cprintf("end burst\n");
   acquire(&tickslock);
+  //printf("end burst pid %d: %d\n",proc->pid,ticks);
   proc->bursts[proc->burst]=ticks-
     proc->bursts[proc->burst];
   if(proc->bursts[proc->burst]==0)
@@ -140,7 +142,6 @@ sys_print_bursts(void)
       break;
     }     
   }
-  cprintf("\n");
-    
+  cprintf(", turnaround time: %d \n",ticks-proc->start_ticks);
   return 0;
 }

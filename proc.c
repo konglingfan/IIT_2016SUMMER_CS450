@@ -7,6 +7,8 @@
 #include "proc.h"
 #include "spinlock.h"
 
+#define MAX_INT ((int)(~0U>>1))
+
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
@@ -161,6 +163,7 @@ fork(void)
   memset(np->bursts,-1,sizeof(np->bursts));
   np->bursts[0]=ticks;
   np->burst=0;
+  np->start_ticks=ticks;
   
   np->state = RUNNABLE;
   safestrcpy(np->name, proc->name, sizeof(proc->name));
@@ -194,6 +197,7 @@ exit(void)
   //Clean bursts info
   memset(proc->bursts,-1,sizeof(proc->bursts));
   proc->burst=0;
+  proc->start_ticks=0;
 
   acquire(&ptable.lock);
 
@@ -270,6 +274,9 @@ void
 scheduler(void)
 {
   struct proc *p;
+  struct proc *shortp=0;
+  int shorttime;
+  int temp;
 
   for(;;){
     // Enable interrupts on this processor.
@@ -277,6 +284,40 @@ scheduler(void)
 
     // Loop over process table looking for process to run.
     acquire(&ptable.lock);
+
+    //add by Lingfan
+    //SRTF scheduler should run before RR
+    
+    shorttime=MAX_INT;
+    //traversal every process to find shortest remain time job.
+    for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+      if(p->state != RUNNABLE)
+	continue;
+      if((p->bursts[p->burst]!=-1)&&
+	 (p->bursts[(p->burst+BURSTS-1)%BURSTS]!=-1)&&
+	 (p->bursts[(p->burst+BURSTS-2)%BURSTS]!=-1)){
+	temp=(p->bursts[p->burst]+p->bursts[(p->burst+BURSTS-1)%BURSTS]+
+	      p->bursts[(p->burst+BURSTS-2)%BURSTS])/3;
+	if(temp<shorttime){
+	  shorttime=temp;
+	  shortp=p;
+	}
+      }
+    }
+
+    //Switch to shortest remain time process
+    if(shorttime!=MAX_INT){
+      proc = shortp;
+      switchuvm(shortp);
+      shortp->state = RUNNING;
+      swtch(&cpu->scheduler, proc->context);
+      switchkvm();
+      proc = 0;
+      release(&ptable.lock);
+      continue;
+    }
+    
+    //RR scheduler
     for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
       if(p->state != RUNNABLE)
         continue;

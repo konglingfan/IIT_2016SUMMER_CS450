@@ -15,7 +15,7 @@ int main(int argc, char *argv[])
 	int process_count;
 	int pid = -1;
 	
-	for (process_count = 0; process_count <= 2; process_count++) {
+	for (process_count = 0; process_count <= 3; process_count++) {
 		pid = fork();
 	}
 	

@@ -2,7 +2,7 @@
 #define NSEGS     7
 //add by Lingfan
 //size of bursts storage
-#define BURSTS	100
+#define BURSTS	20
 
 // Per-CPU state
 struct cpu {
@@ -72,6 +72,7 @@ struct proc {
   //add by Lingfan
   int bursts[BURSTS];	       // Bursts buffer
   int burst;	       // Current burst pointer
+  int start_ticks;
 };
 
 // Process memory is laid out contiguously, low addresses first:
