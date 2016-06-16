@@ -145,3 +145,58 @@ sys_print_bursts(void)
   cprintf(", turnaround time: %d \n",ticks-proc->start_ticks);
   return 0;
 }
+
+int
+sys_thread_create(void)
+{
+  int tmain,stack,arg;	//use int to get address of args.
+  argint(0,&tmain);
+  argint(1,&stack);
+  argint(2,&arg);
+
+  //cast to void pointer
+  return thread_create((void*)tmain,(void*)stack,(void*)arg);
+}
+
+int
+sys_thread_exit(void)
+{
+  thread_exit();
+  return 0;
+}
+
+int
+sys_thread_join(void)
+{
+  int stack;
+  argint(0,&stack);
+
+  return thread_join((void**)stack);
+}
+
+int
+sys_mtx_create(void)
+{
+  int state;
+  argint(0,&state);
+
+  return mtx_create(state);
+}
+
+int
+sys_mtx_lock(void)
+{
+  int id;
+  argint(0,&id);
+
+  return mtx_lock(id);
+}
+
+int
+sys_mtx_unlock(void)
+{
+  int id;
+  argint(0,&id);
+
+  return mtx_unlock(id);
+}

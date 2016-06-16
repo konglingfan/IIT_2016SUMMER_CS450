@@ -8,11 +8,18 @@
 #include "spinlock.h"
 
 #define MAX_INT ((int)(~0U>>1))
+#define NMTX 5
 
 struct {
   struct spinlock lock;
   struct proc proc[NPROC];
 } ptable;
+
+
+//total 5 mutex supports
+//you can get more mutexs if you want.
+struct spinlock mutex[NMTX];
+static int pos=0;
 
 static struct proc *initproc;
 
@@ -71,6 +78,8 @@ found:
   p->context = (struct context*)sp;
   memset(p->context, 0, sizeof *p->context);
   p->context->eip = (uint)forkret;
+
+  p->thread_flag=0;
 
   return p;
 }
@@ -169,6 +178,180 @@ fork(void)
   safestrcpy(np->name, proc->name, sizeof(proc->name));
   return pid;
 }
+
+//add by Lingfan
+//thread_create
+//mainly mimic fork except ustack part
+//ustack part mimic exec function.
+int
+thread_create(void (*tmain)(void *), void *stack, void *arg)
+{
+  int pid;
+  struct proc *np;
+  int i;
+  uint *ustack;
+
+  if((np = allocproc())==0)
+    return -1;
+
+  np->thread_flag=1;//mark this process as thread;
+  np->pgdir = proc->pgdir;
+ 
+  np->sz = proc->sz;
+  np->parent = proc;
+
+  *np->tf = *proc->tf;
+  //set thread entry
+  np->tf->eip = (uint)tmain;
+
+  //set user stack
+  ustack=(uint*)stack;
+  //ustack[0]=0xffffffff;
+  ustack[1]=(uint)arg;	//??? maybe elf format?
+  np->tf->esp = (uint)stack;
+  np->ustack=(char*)stack;
+
+  //return 0;
+  np->tf->eax = 0;
+
+  for(i = 0; i < NOFILE; i++)
+    if(proc->ofile[i])
+      np->ofile[i]=filedup(proc->ofile[i]);
+  
+  np->cwd = proc->cwd;
+
+  pid = np->pid;
+
+  //bursts counting part
+  memset(np->bursts,-1,sizeof(np->bursts));
+  np->bursts[0]=ticks;
+  np->burst=0;
+  np->start_ticks=ticks;
+
+  np->state = RUNNABLE;
+  safestrcpy(np->name, proc->name, sizeof(proc->name));
+
+  return pid;
+}
+
+//thread_exit
+// same with exit
+//Do not use!!
+void thread_exit(void)
+{
+  struct proc *p;
+
+  if(proc==initproc)
+    panic("init exiting");
+
+  if(!(proc->thread_flag))
+    panic("not thread");
+
+  memset(proc->bursts,-1,sizeof(proc->bursts));
+  proc->burst=0;
+  proc->start_ticks=0;
+
+  acquire(&ptable.lock);
+
+  wakeup1(proc->parent);
+
+  for(p = ptable.proc; p < &ptable.proc[NPROC]; p++){
+    if(p->parent == proc){
+      p->parent = initproc;
+      if(p->state == ZOMBIE)
+	wakeup1(initproc);
+    }
+  }
+
+  proc->state=ZOMBIE;
+  sched();
+  panic("zombie exit");
+  
+}
+
+//waiting for threads exit
+//return thread id
+//get stack pointer
+int
+thread_join(void **stack)
+{
+  struct proc *p;
+  int havekids, pid;
+
+  acquire(&ptable.lock);
+  while(1){
+    havekids = 0;
+    for(p=ptable.proc;p<&ptable.proc[NPROC];p++){
+      if(p->parent !=proc)
+	continue;
+      //if not thread continue.
+      if(!p->thread_flag)
+	continue;
+      havekids=1;
+      if(p->state==ZOMBIE){
+	*stack=(void*)p->ustack;
+	pid=p->pid;
+	kfree(p->kstack);
+	p->kstack=0;
+	p->state = UNUSED;
+	p->pid=0;
+	p->parent=0;
+	p->name[0]=0;
+	p->killed = 0;
+	release(&ptable.lock);
+	return pid;
+      }
+    }
+
+    if(!havekids||proc->killed){
+      release(&ptable.lock);
+      return -1;
+    }
+
+    sleep(proc, &ptable.lock);
+  }
+}
+
+
+
+int mtx_create(int state)
+{
+  if(pos==NMTX)	return -1;
+  initlock(&mutex[pos],"mutex");
+  if(state)
+    mtx_lock(pos);
+  return pos++;
+}
+
+int mtx_lock(int id)
+{
+  //cli();
+  if((id>NMTX-1)||(id<0))
+    return -1;
+  //acquire(&mutex[id]);	// sched test cli flag;
+  //below is the acquire without cli and sti;
+  while(xchg(&mutex[id].locked, 1) != 0)
+    ;
+  mutex[id].cpu=cpu;
+  
+  return 0;
+}
+
+int mtx_unlock(int id)
+{
+  if((id>NMTX-1)||(id<0))
+    return -1;
+  //release(&mutex[id]);
+  //sti();
+  mutex[id].cpu=0;
+  mutex[id].pcs[0]=0;
+
+  xchg(&mutex[id].locked, 0); 
+  return 0;
+}
+  
+
+
 
 // Exit the current process.  Does not return.
 // An exited process remains in the zombie state

@@ -168,6 +168,7 @@ UPROGS=\
 	_zombie\
 	_bigtest\
 	_schedtest\
+	_threadtest\
 
 fs.img: mkfs README $(UPROGS)
 	./mkfs fs.img README $(UPROGS)

@@ -73,6 +73,8 @@ struct proc {
   int bursts[BURSTS];	       // Bursts buffer
   int burst;	       // Current burst pointer
   int start_ticks;
+  char thread_flag;	//if this is a thread,then thread_flag=1, otherwise 0;
+  char *ustack;		//user stack address;
 };
 
 // Process memory is laid out contiguously, low addresses first:

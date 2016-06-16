@@ -23,3 +23,9 @@
 #define SYS_start_burst	22
 #define SYS_end_burst	23
 #define SYS_print_bursts	24
+#define SYS_thread_create	25
+#define SYS_thread_exit		26
+#define SYS_thread_join		27
+#define SYS_mtx_create		28
+#define SYS_mtx_lock		29
+#define SYS_mtx_unlock		30

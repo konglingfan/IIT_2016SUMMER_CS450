@@ -101,6 +101,12 @@ extern int sys_uptime(void);
 extern int sys_start_burst(void);
 extern int sys_end_burst(void);
 extern int sys_print_bursts(void);
+extern int sys_thread_create(void);
+extern int sys_thread_exit(void);
+extern int sys_thread_join(void);
+extern int sys_mtx_create(void);
+extern int sys_mtx_lock(void);
+extern int sys_mtx_unlock(void);
 
 static int (*syscalls[])(void) = {
 [SYS_fork]    sys_fork,
@@ -127,6 +133,12 @@ static int (*syscalls[])(void) = {
 [SYS_start_burst]	sys_start_burst,
 [SYS_end_burst]	sys_end_burst,
 [SYS_print_bursts]	sys_print_bursts,
+[SYS_thread_create]	sys_thread_create,
+[SYS_thread_exit]	sys_thread_exit,
+[SYS_thread_join]	sys_thread_join,
+[SYS_mtx_create]	sys_mtx_create,
+[SYS_mtx_lock]		sys_mtx_lock,
+[SYS_mtx_unlock]	sys_mtx_unlock,
 };
 
 void
