@@ -1,0 +1,15 @@
+Expectation:
+
+1. Footman solution will be the slowest, because all of the philosophers are pending on the philosophers on the right hand expect the last one, because this solution allowing only n-1 philosopers can eating at same time. But this solution's problem is that there always n-2 philosophers pending on the right hand philosophers, which means most time there will have on one philosoper is eating. This solution is very inefficient.
+
+2. Left-handed solution will faster than footman solution because I randomly choose number of philosophers pending left hand first, but the same problem with footman solution will be happened. There will produce some sequences that one pending on next one. So this solution is inefficient too.
+
+3. Tanenbaum's solution is the fastest, because philospers will check both left hand and right hand. To solve the starvation, I record the number of meals each philosopher has ate, when one philosopher put down forks, they will active the philosopher with minimum number of ate meals.
+
+Result:
+As the same as I expected :)
+
+1. Footman solution, time elapsed:	21.906s
+2. Left-handed solution, time elapsed:	20.010s
+3. Tanenbaum's solution, time elapsed:	14.550s
+
